@@ -16,6 +16,7 @@ import com.finance.trade_learn.utils.sharedPreferencesManager
 import com.finance.trade_learn.utils.testWorkManager
 import com.finance.trade_learn.viewModel.ViewModelMarket
 import com.finance.trade_learn.viewModel.viewModelUtils
+import com.google.android.gms.ads.MobileAds
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -23,8 +24,6 @@ import com.smartlook.sdk.smartlook.Smartlook
 import java.text.SimpleDateFormat
 import java.util.*
 
-
-var isCameFromActivity = false
 
 class MainActivity : AppCompatActivity() {
     private lateinit var controller: NavController
@@ -46,6 +45,9 @@ class MainActivity : AppCompatActivity() {
         bottomNavigationItemClickListener()
         isOneEntering()
         firebaseSave()
+
+
+        MobileAds.initialize(this) {}
     }
 
 
@@ -59,13 +61,6 @@ class MainActivity : AppCompatActivity() {
 
         controller = findNavController(R.id.fragmentContainerView)
         dataBindingMain.options.setupWithNavController(controller)
-
-
-        if (isCameFromActivity) {
-            val directions = homeDirections.actionHomeToTradePage()
-            controller.navigate(directions)
-        }
-
 
     }
 
@@ -90,30 +85,6 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-
-    override fun onRestart() {
-        if (isCameFromActivity) {
-            isCameFromActivity = false
-
-
-            when (controller.currentDestination?.id) {
-                R.id.marketPage -> {
-                    val directions = MarketPageDirections.actionMarketPageToTradePage()
-                    controller.navigate(directions)
-                }
-                R.id.home -> {
-                    val directions = homeDirections.actionHomeToTradePage()
-                    controller.navigate(directions)
-
-                }
-                else -> Toast.makeText(this, "there is a error at background", Toast.LENGTH_SHORT)
-                    .show()
-
-
-            }
-        }
-        super.onRestart()
-    }
 
 
     fun firebaseSave() {
