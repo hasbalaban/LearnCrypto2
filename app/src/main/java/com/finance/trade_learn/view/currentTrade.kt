@@ -26,10 +26,12 @@ import com.finance.trade_learn.R
 import com.finance.trade_learn.databinding.FragmentCurrentTradeBinding
 import com.finance.trade_learn.enums.tradeEnum
 import com.finance.trade_learn.models.on_crypto_trade.BaseModelOneCryptoModel
+import com.finance.trade_learn.utils.Ads
 import com.finance.trade_learn.utils.ReviewUsI
 import com.finance.trade_learn.utils.setImageSvg
 import com.finance.trade_learn.utils.sharedPreferencesManager
 import com.finance.trade_learn.viewModel.viewModelCurrentTrade
+import com.google.android.gms.ads.AdRequest
 
 
 class currentTrade : Fragment(), TextWatcher, ReviewUsI {
@@ -48,6 +50,7 @@ class currentTrade : Fragment(), TextWatcher, ReviewUsI {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        print("sd")
 
 
     }
@@ -88,6 +91,16 @@ class currentTrade : Fragment(), TextWatcher, ReviewUsI {
         dataBindingCurrentTrade.coinPrice.addTextChangedListener(this)
         getDetailsOfCoinFromDatabase()
         startAnimation()
+        setAd()
+    }
+
+
+    private fun setAd (){
+        dataBindingCurrentTrade.adView.apply {
+            loadAd(AdRequest.Builder().build())
+            adListener= Ads.listenerAdRequest(dataBindingCurrentTrade.adView)
+        }
+
     }
 
 
@@ -182,16 +195,17 @@ class currentTrade : Fragment(), TextWatcher, ReviewUsI {
         viewModelCurrentTrade.getSelectedCoinDetails(coinName)
         if (viewVisible) {
             viewModelCurrentTrade.selectedCoinToTradeDetails.observe(
-                viewLifecycleOwner, { coin ->
-                    currentPrice = coin[0].price.toDouble()
-                    putDataInItemSettings(coin[0])
+                viewLifecycleOwner
+            ) { coin ->
+                currentPrice = coin[0].price.toDouble()
+                putDataInItemSettings(coin[0])
 
 
-                    // after it get data from api initialize max of seek bar
-                    maxOfSeekBar()
+                // after it get data from api initialize max of seek bar
+                maxOfSeekBar()
 
 
-                })
+            }
 
 
         }
@@ -271,8 +285,15 @@ class currentTrade : Fragment(), TextWatcher, ReviewUsI {
                             if (dataBindingCurrentTrade.coinAmount.text.toString() != "") {
                                 val currentAmount =
                                     dataBindingCurrentTrade.coinAmount.text.toString().toDouble()
-                                val newAmount = currentAmount - 1.000
-                                dataBindingCurrentTrade.coinAmount.setText(newAmount.toString())
+                                if (currentPrice < 1000.0)
+                                {
+                                    val newAmount = currentAmount - 1.000
+                                    dataBindingCurrentTrade.coinAmount.setText(newAmount.toString())
+                                }
+                                else{
+                                    val newAmount = currentAmount - 0.001
+                                    dataBindingCurrentTrade.coinAmount.setText(newAmount.toString())
+                                }
                             }
 
                         } else {
@@ -295,8 +316,15 @@ class currentTrade : Fragment(), TextWatcher, ReviewUsI {
                     if (dataBindingCurrentTrade.coinAmount.text.toString() != "") {
                         val currentAmount =
                             dataBindingCurrentTrade.coinAmount.text.toString().toDouble()
-                        val newAmount = currentAmount + 1.000
-                        dataBindingCurrentTrade.coinAmount.setText(newAmount.toString())
+                        if (currentPrice < 1000.0)
+                        {
+                            val newAmount = currentAmount + 1.000
+                            dataBindingCurrentTrade.coinAmount.setText(newAmount.toString())
+                        }
+                        else{
+                            val newAmount = currentAmount + 0.001
+                            dataBindingCurrentTrade.coinAmount.setText(newAmount.toString())
+                        }
                     } else {
                         val currentAmount = 0.000
                         val newAmount = currentAmount + 1.000

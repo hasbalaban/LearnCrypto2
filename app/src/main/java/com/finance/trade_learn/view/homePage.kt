@@ -13,16 +13,22 @@ import android.view.animation.AnimationUtils
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.Navigation
+import androidx.navigation.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.finance.trade_learn.Adapters.SolveCoinName
 import com.finance.trade_learn.Adapters.adapter_for_hot_coins
 import com.finance.trade_learn.Adapters.adapter_for_populer_coins
 import com.finance.trade_learn.R
+import com.finance.trade_learn.clickListener.MarketClickListener
 import com.finance.trade_learn.databinding.FragmentHomeBinding
 import com.finance.trade_learn.enums.enumPriceChange
-import com.finance.trade_learn.utils.IntentNavigate
+import com.finance.trade_learn.utils.Ads
+import com.finance.trade_learn.utils.sharedPreferencesManager
 import com.finance.trade_learn.viewModel.ViewModeHomePage
+import com.google.android.gms.ads.AdRequest
 import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
@@ -81,30 +87,46 @@ class home : Fragment() {
 
         clickToSearch()
         startAnimation()
-        isViewModelIntialize()
+        setAd()
         super.onViewCreated(view, savedInstanceState)
+    }
+
+    private fun setAd (){
+        dataBindingHome.adView.apply {
+            loadAd(AdRequest.Builder().build())
+            adListener= Ads.listenerAdRequest(dataBindingHome.adView)
+        }
+
     }
 
     private fun isViewModelIntialize() {
         val state = viewModelHome.isInitialize
-        Log.i("state", state.toString())
 
         if (state.value!!) {
-            viewModelHome.listOfCrypto.observe(viewLifecycleOwner, Observer {
+            viewModelHome.listOfCrypto.observe(viewLifecycleOwner) {list ->
 
-                val random = Random.nextInt(0,it.size-1)
-                val chngState = if (it[random].raise == enumPriceChange.negative) "-"
-                else if (it[random].raise == enumPriceChange.pozitive) "+"
-                    else ""
-                dataBindingHome.notices.text =
-                    it[random].CoinName + "${it[random].CoinPrice}  chng: $chngState${it[random].CoinChangePercente}"
-                adapterForHotList.updateData(it)
-                viewModelHome.isInitialize.value=true
-            })
-            viewModelHome.listOfCryptoForPopular.observe(viewLifecycleOwner, Observer {
+                val random = Random.nextInt(0, list.size - 1)
+/*
+                with(dataBindingHome.notices){
+
+                    this.setOnClickListener {
+                        val coinName = SolveCoinName(list[random].CoinName)
+                        sharedPreferencesManager(context)
+                            .addSharedPreferencesString("coinName", coinName)
+                        findNavController().navigate(R.id.tradePage)
+
+                    }
+                    text = list[random].CoinName + " ${list[random].CoinPrice}  chng: ${list[random].CoinChangePercente}"
+                }
+
+ */
+                adapterForHotList.updateData(list)
+                viewModelHome.isInitialize.value = true
+            }
+            viewModelHome.listOfCryptoForPopular.observe(viewLifecycleOwner) {
 
                 adapterForPopulerList.updateData(it)
-            })
+            }
         }
     }
 
@@ -114,8 +136,8 @@ class home : Fragment() {
         val animation =
             AnimationUtils.loadAnimation(requireContext(), R.anim.animation_for_home_view)
 
-        val imageView = dataBindingHome.notices
-        imageView.animation = animation
+        //val imageView = dataBindingHome.notices
+        //imageView.animation = animation
     }
 
 
@@ -124,9 +146,6 @@ class home : Fragment() {
 
 
     fun getData() {
-        viewModelHome.runGetAllCryptoFromApi()
-
-
         if (viewVisible) {
             //observer state of list of coins
             viewModelHome.state.observe(viewLifecycleOwner, Observer {
@@ -135,10 +154,16 @@ class home : Fragment() {
                         viewModelHome.listOfCrypto.observe(
                             viewLifecycleOwner,
                             Observer { list ->
+                                list?.let {
+                                    adapterForHotList.updateData(it)
+                                    if (viewModelHome.isInitialize.value!!){
+                                        dataBindingHome.progressBar.visibility=View.INVISIBLE
+                                    }
 
-                                adapterForHotList.updateData(list)
-                                if (viewModelHome.isInitialize.value!!){
-                                    dataBindingHome.progressBar.visibility=View.INVISIBLE
+
+                                    isViewModelIntialize()
+
+
                                 }
 
 
@@ -147,7 +172,11 @@ class home : Fragment() {
                         viewModelHome.listOfCryptoForPopular.observe(
                             viewLifecycleOwner,
                             Observer { list ->
-                                adapterForPopulerList.updateData(list)
+
+                                list?.let {
+
+                                    adapterForPopulerList.updateData(it)
+                                }
 
                             })
                     }
@@ -161,22 +190,14 @@ class home : Fragment() {
 
     private fun update() {
 
-        runnable = object : Runnable {
-            override fun run() {
-
-                runBlocking {
-                    getData()
-
-                }
-
-                handler.postDelayed(runnable, 3000)
-
+        runnable = Runnable {
+            runBlocking {
+                viewModelHome.runGetAllCryptoFromApi()
+                getData()
             }
-
+            handler.postDelayed(runnable, 7500)
         }
         handler.post(runnable)
-
-
     }
 
     override fun onPause() {
@@ -189,18 +210,16 @@ class home : Fragment() {
 
         viewVisible = true
         update()
+        if (viewModelHome.state.value == true) getData()
+
         super.onResume()
     }
 
 
     fun clickToSearch() {
         dataBindingHome.searchCoin.setOnClickListener {
-            /* val action = homeDirections.actionHomeToSearchCoin()
+             val action = homeDirections.actionHomeToSearchActivity()
              Navigation.findNavController(it).navigate(action)
-
-
-             */
-            IntentNavigate().navigate(requireContext(), SearchActivity::class.java)
 
 
         }
