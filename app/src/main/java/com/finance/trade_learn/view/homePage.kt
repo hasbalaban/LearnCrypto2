@@ -14,19 +14,14 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
-import androidx.navigation.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.finance.trade_learn.Adapters.SolveCoinName
 import com.finance.trade_learn.Adapters.adapter_for_hot_coins
 import com.finance.trade_learn.Adapters.adapter_for_populer_coins
 import com.finance.trade_learn.R
-import com.finance.trade_learn.clickListener.MarketClickListener
 import com.finance.trade_learn.databinding.FragmentHomeBinding
-import com.finance.trade_learn.enums.enumPriceChange
 import com.finance.trade_learn.utils.Ads
-import com.finance.trade_learn.utils.sharedPreferencesManager
 import com.finance.trade_learn.viewModel.ViewModeHomePage
 import com.google.android.gms.ads.AdRequest
 import kotlinx.coroutines.runBlocking
@@ -36,11 +31,12 @@ class home : Fragment() {
 
     lateinit var adapterForHotList: adapter_for_hot_coins
     lateinit var adapterForPopulerList: adapter_for_populer_coins
-    var viewVisible = false
+    private var viewVisible = false
     lateinit var dataBindingHome: FragmentHomeBinding
     lateinit var viewModelHome: ViewModeHomePage
-    var runnable = Runnable { }
-    var handler = Handler(Looper.getMainLooper())
+    private var runnable = Runnable { }
+    private var handler = Handler(Looper.getMainLooper())
+    private var timeLoop = 2000L
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -156,6 +152,7 @@ class home : Fragment() {
                             Observer { list ->
                                 list?.let {
                                     adapterForHotList.updateData(it)
+                                    timeLoop = 7500
                                     if (viewModelHome.isInitialize.value!!){
                                         dataBindingHome.progressBar.visibility=View.INVISIBLE
                                     }
@@ -195,7 +192,7 @@ class home : Fragment() {
                 viewModelHome.runGetAllCryptoFromApi()
                 getData()
             }
-            handler.postDelayed(runnable, 7500)
+            handler.postDelayed(runnable, timeLoop)
         }
         handler.post(runnable)
     }
